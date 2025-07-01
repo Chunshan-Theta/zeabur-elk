@@ -61,17 +61,18 @@ spec:
           args:
             - -c
             - |
-              # 直接啟動 Kibana，環境變數由外部帶入
+              # Create custom kibana.yml
+              cat > config/kibana.yml << EOF
+              server.host: "0.0.0.0"
+              server.name: "kibana"
+              elasticsearch.hosts: ["http://elk-elasticsearch.zeabur.internal:9200"]
+              EOF
+              
+              # Start Kibana
               bin/kibana --allow-root
         environment:
-          ELASTICSEARCH_HOSTS:
-            default: "http://elk-elasticsearch.zeabur.internal:9200"
           NODE_OPTIONS:
             default: "--no-node-snapshot --no-experimental-fetch"
-          SERVER_HOST:
-            default: "0.0.0.0"
-          SERVER_NAME:
-            default: "kibana"
         ports:
           - id: kibana
             port: 5601
