@@ -9,7 +9,7 @@ spec:
     - Monitoring
     - Analytics
   services:
-    - name: elasticsearch
+    - name: elk-elasticsearch
       template: PREBUILT
       spec:
         source:
@@ -29,8 +29,19 @@ spec:
             default: single-node
           xpack.security.enabled:
             default: "false"
+          xpack.security.http.ssl.enabled:
+            default: "false"
+          xpack.security.transport.ssl.enabled: 
+            default: "false"
+          http.host:
+            default: "0.0.0.0"
+          network.host:
+            default: "0.0.0.0"
           ES_JAVA_OPTS:
             default: "-Xms512m -Xmx512m"
+          ELASTIC_PASSWORD:
+            default: "${ELASTIC_PASSWORD}"
+              
         ports:
           - id: elasticsearch
             port: 9200
@@ -45,10 +56,22 @@ spec:
       spec:
         source:
           image: docker.elastic.co/kibana/kibana:8.15.0
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - |
+              # 直接啟動 Kibana，環境變數由外部帶入
+              bin/kibana --allow-root
         environment:
-          ELASTICSEARCH_USERNAME: "" 
-          ELASTICSEARCH_PASSWORD: "" 
-          ELASTICSEARCH_HOSTS: "http://elasticsearch.zeabur.internal:9200"
+          ELASTICSEARCH_HOSTS:
+            default: "http://elk-elasticsearch.zeabur.internal:9200"
+          NODE_OPTIONS:
+            default: "--no-node-snapshot --no-experimental-fetch"
+          SERVER_HOST:
+            default: "0.0.0.0"
+          SERVER_NAME:
+            default: "kibana"
         ports:
           - id: kibana
             port: 5601
