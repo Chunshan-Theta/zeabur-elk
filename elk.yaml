@@ -1,0 +1,55 @@
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+  name: ELKStack
+spec:
+  description: ELK Stack configuration integrated with RagFlow services
+  tags:
+    - Logging
+    - Monitoring
+    - Analytics
+  services:
+    - name: elasticsearch
+      template: PREBUILT
+      spec:
+        source:
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+          command:
+            - /bin/bash
+          args:
+            - -c
+            - |
+              groupadd -g 1000 elasticsearch || true
+              useradd -u 1000 -g 1000 -d /usr/share/elasticsearch elasticsearch || true
+              chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
+              su elasticsearch -c "cd /usr/share/elasticsearch && ./bin/elasticsearch-keystore create"
+              su elasticsearch -c "cd /usr/share/elasticsearch && ./bin/elasticsearch"
+        env:
+          discovery.type:
+            default: single-node
+          xpack.security.enabled:
+            default: "false"
+          ES_JAVA_OPTS:
+            default: "-Xms512m -Xmx512m"
+        ports:
+          - id: elasticsearch
+            port: 9200
+            type: HTTP
+        volumes:
+          - id: data
+            dir: /usr/share/elasticsearch/data
+
+
+    - name: kibana
+      template: PREBUILT
+      spec:
+        source:
+          image: docker.elastic.co/kibana/kibana:8.15.0
+        environment:
+          ELASTICSEARCH_USERNAME: "" 
+          ELASTICSEARCH_PASSWORD: "" 
+          ELASTICSEARCH_HOSTS: "http://elasticsearch.zeabur.internal:9200"
+        ports:
+          - id: kibana
+            port: 5601
+            type: HTTP

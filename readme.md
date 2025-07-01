@@ -1,0 +1,1 @@
+zeabur template deploy -f elk.yaml 
